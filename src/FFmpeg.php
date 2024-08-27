@@ -11,6 +11,8 @@
 */
 class FFmpeg
 {
+	public $out;
+	public $var;
 	/**
 	*	
 	*/
@@ -52,16 +54,18 @@ class FFmpeg
 		'filename'			=>	'i',
 		'offset'			=>	'itsoffset',
 		'time'				=>	'timestamp',
-		'number'			=>	'vframes',
+		'number'			=>	'vframes'
 	);
 	/**
 	*	
 	*/
 	private $ffmpeg		=	'ffmpeg';
 	/**
-	*	
+     * 	Updated: 05 Aug 2024
+	 *  Set to public for 'input' / 'i' counter
+     * 
 	*/
-	private $options	=	array();
+	public $options	=	array();
 	/**
 	*	
 	*/
@@ -128,11 +132,13 @@ class FFmpeg
 		return $this;
 	}
 	/**
-	*   @param	string	$output			Output file path
-	*   @param	string	$forceFormat	Force format output
-	*   @return	object
-	*   @access	public
-	*/
+     * 	Updated: 05 Aug 2024
+     * 
+	 *   @param	string	$output			Output file path
+	 *   @param	string	$forceFormat	Force format output
+	 *   @return	object
+	 *   @access	public
+	 */
 	public function output( $output = null , $forceFormat = null )
 	{
 		$this->forceFormat( $forceFormat );
@@ -156,7 +162,21 @@ class FFmpeg
 						$items[] = $item;
 					}
 				}
-				$options [] = "-".$option." ".join(',',$items);
+
+                if ( $option == "i" ) {
+
+					foreach ($items AS $item => $val) { 
+						$options [] .= "-".$option." " . $val;
+					}
+
+				} else {
+
+					$options [] = "-".$option." ".join(',',$items);
+				
+				}
+
+				// $options [] = "-".$option." ".join(',',$items);
+
 			} else {
 				$options [] = "-".$option." ".strval($values);
 			}
@@ -178,6 +198,103 @@ class FFmpeg
 			}
 			$this->set('f',$forceFormat,false);
 		}
+		return $this;
+	}
+    /**
+	 *   ATENTION!: This method is experimental
+	 *
+	 *   Updated: 05 Aug 2024
+	 *	 
+	 *   @return	object  $ytshort https://ffmpeg.org/ffmpeg-filters.html
+	 *   @param	array 	$array_options
+	 *   @access	public
+	 *   @example    	$FFmpeg->ytshort( $mode );
+	 * 
+	 *   Available Ratios:
+	 * 	 16:9, 1:1, 4:5, 9:16
+	 * 
+	 */
+	public function ytshort( $ratio = "landscape", $logo = true )
+	{
+		// Youtube short will natively play at 24, 25, and 30 
+		// note: most other social platform play at 30 FPS.
+		$this->frameRate(30);
+
+		$arr_stack = array(
+			0 => "[0:v]scale=2560:2560*(9/16),hue=s=0,boxblur=10[bg];",
+			1 => "[0:v]scale=720:405,crop=720:405[fg];",
+			2 => "[bg][fg]overlay=(W-w)/2:(H-h)/2[tmp];",
+			3 => "[tmp]crop=720:1280[final];"			
+		);
+		
+		// Generate YT_Short with ratio (16/9)
+		if ( $ratio == "landscape" ) {
+
+			$arr_stack[1] = "[0:v]scale=720:405,crop=720:405[fg];";
+
+		// Generate YT_Short with ratio (1/1)
+		} elseif ( $ratio == "square") {
+
+			$arr_stack[1] = "[0:v]scale=1280:720,crop=720:720[fg];";
+		
+		// Generate YT_Short with ratio (4/5)
+		} elseif ( $ratio == "vertical") {
+
+			$arr_stack[1] = "[0:v]scale=1280:720,crop=720*(5/4):720[fg];";
+		
+		// Generate YT_Short with ratio (9/16) or 'Full Vertical'
+		} else {
+
+			$arr_stack[1] = "[0:v]scale=2560:2560*(9/16),crop=720:1280[fg];";
+
+		}
+		
+		// check if the inputs file are more then '1'
+		$inputs = count( $this->options['i'] );
+		// YT_Short with Live logo
+		if ( $inputs > 1 && $logo == true ) {
+				
+			array_splice( $arr_stack, count($arr_stack), 0, "[1:v]scale=iw*(9/16):-1[wm];[final][wm]overlay=30:30");
+			
+		}
+
+		// Loop through options array 
+		foreach($arr_stack as $key => $value) {
+			$str_filters .= $value;
+		}
+	
+		$this->options['filter_complex'] = chr(34) . $str_filters . chr(34);
+		return $this;
+
+	}    
+    /**
+	 *   ATENTION!: This method is experimental
+	 *
+	 *   Updated: 05 Aug 2024
+	 *	 
+	 *   @param	array	$file	multi inputs file path
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @propertunist
+	 */
+	public function inputs ( array $files=[] )
+	{
+
+		// Loop through options array 
+		foreach($files as $key => $value) {
+
+			if (file_exists($value) AND is_file($value)) {
+				$this->set('i', '"'.$value.'"', true);
+			} else {
+				if (strstr($value, '%') !== false) {
+					$this->set('i', '"'.$value.'"', false);
+				} else {
+					trigger_error ("File $value doesn't exist", E_USER_ERROR);
+				}
+			};
+
+		}
+		
 		return $this;
 	}
 	/**
@@ -484,7 +601,8 @@ class FFmpeg
 			trigger_error("Cannot execute a blank command",E_USER_ERROR);
 			return false;
 		}else{
-			return exec( $this->command . $append );
+			return exec( $this->command . $append, $this->out, $this->var);
+			
 		}
 	}
 	/**
