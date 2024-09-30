@@ -3,7 +3,6 @@
 *	include FFmpeg class
 **/
 include DIRNAME(DIRNAME(__FILE__)).'/src/FFmpeg.php';
-
 /**
 *	get options from database
 **/
@@ -15,7 +14,7 @@ $options = array(
 /**
 *	Create command
 */
-$FFmpeg = new FFmpeg( '/usr/local/bin/ffmpeg' );
+$FFmpeg = new FFmpeg( exec('which ffmpeg') );
 $FFmpeg->input( '/var/media/original.avi' );
 $FFmpeg->transpose( 0 )->vflip()->grayScale()->vcodec('h264')->frameRate('30000/1001');
 $FFmpeg->acodec( 'aac' )->audioBitrate( '192k' );

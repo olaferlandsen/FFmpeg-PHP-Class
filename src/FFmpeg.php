@@ -200,6 +200,56 @@ class FFmpeg
 		}
 		return $this;
 	}
+	/**
+	 *   ATENTION!: This method is experimental
+	 *
+	 *   Updated: 05 Aug 2024
+	 *	 
+	 *   @param	array	$options 	drawtext options
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @nath4n
+	 */
+	public function drawtext( array $options=[] )
+	{    
+
+		$arr_options = array_merge([
+			'font' => 'Arial',
+			'text' => 'Hello World!',			
+			'x' => '(w-text_w)/2',
+			'y' => '(h-text_h)/2',
+			'alpha' => null,
+			'fontsize' => '24',
+			'fontcolor' => 'white',
+			'boxcolor' => 'black@0.5',
+			'bordercolor' => null,
+			'shadowcolor' => null,
+			'box' => '1',
+			'boxw' => null,
+			'boxh' => null,
+			'boxborderw' => '5',
+			'line_spacing' => null,
+			'text_align' => null,
+			'shadowx' => null,
+			'shadowy' => null,
+			'borderw' => null	
+		], $options);
+
+		// Loop through options array 
+		foreach($arr_options as $key => $value) {
+
+			if ($key == 'text') $value = escapeshellarg($value);
+			
+			if (!is_null( $arr_options[$key] ) ) {            
+				$str_options .= $key . "=" . $value . ":";
+			};
+
+		}
+
+		$this->options['vf']['drawtext'] = chr(34) . $str_options . chr(34);
+		return $this;
+
+	}
     /**
 	 *   ATENTION!: This method is experimental
 	 *
@@ -266,47 +316,22 @@ class FFmpeg
 		$this->options['filter_complex'] = chr(34) . $str_filters . chr(34);
 		return $this;
 
-	}    
-    /**
+	}
+	/**
 	 *   ATENTION!: This method is experimental
 	 *
-	 *   Updated: 05 Aug 2024
+	 *   Updated: 30 Sep 2024
 	 *	 
-	 *   @param	array	$file	multi inputs file path
+	 *   @param	string	$file	input file path
 	 *   @return	object
 	 *   @access	public
 	 *   @version	1.2	Fix by @propertunist
-	 */
-	public function inputs ( array $files=[] )
-	{
-
-		// Loop through options array 
-		foreach($files as $key => $value) {
-
-			if (file_exists($value) AND is_file($value)) {
-				$this->set('i', '"'.$value.'"', true);
-			} else {
-				if (strstr($value, '%') !== false) {
-					$this->set('i', '"'.$value.'"', false);
-				} else {
-					trigger_error ("File $value doesn't exist", E_USER_ERROR);
-				}
-			};
-
-		}
-		
-		return $this;
-	}
-	/**
-	*   @param	string	$file	input file path
-	*   @return	object
-	*   @access	public
-	*   @version	1.2	Fix by @propertunist
 	*/
 	public function input ($file)
 	{
 		if (file_exists($file) AND is_file($file)) {
-			$this->set('i', '"'.$file.'"', false);
+			// set $append parameter into true for muliple inputs
+			$this->set('i', '"'.$file.'"', true);
 		} else {
 			if (strstr($file, '%') !== false) {
 				$this->set('i', '"'.$file.'"', false);
