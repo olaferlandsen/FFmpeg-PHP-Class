@@ -150,35 +150,23 @@ class FFmpeg
 					if (!is_null($val)) {
 						if (is_array($val)) {
 							print_r( $val );
-							$val = join( ',' , $val );
+							$val = join( ' ' , $val );
 						}
 						$val = strval( $val );
 						if (is_numeric( $item ) AND is_integer($item)) {
 							$items[] = $val;
 						} else {
-							$items[] = $item."=". $val;
+							$items[] = chr(34) . $item."=". $val . chr(34);
 						}
 					} else {
 						$items[] = $item;
 					}
 				}
-
-                if ( $option == "i" ) {
-
-					foreach ($items AS $item => $val) { 
-						$options [] .= "-".$option." " . $val;
-					}
-
-				} else {
-
-					$options [] = "-".$option." ".join(',',$items);
 				
-				}
-
-				// $options [] = "-".$option." ".join(',',$items);
+				$options [] = "-".$option." ".join(',',$items);
 
 			} else {
-				$options [] = "-".$option." ".strval($values);
+				$options [] = "-" . $option . " ". strval($values);
 			}
 		}
 		$this->command = $this->ffmpeg." ".join(' ',$options)." ".$output . $this->STD;
@@ -199,6 +187,39 @@ class FFmpeg
 			$this->set('f',$forceFormat,false);
 		}
 		return $this;
+	}
+	/**
+	 *   ATENTION!: This method is experimental
+	 *
+	 *   Updated: 05 Aug 2024
+	 *	 
+	 *   @param	array	$options 	subtitles options
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @nath4n
+	 */
+	public function subtitles( array $options=[] )
+	{    
+		
+		$arr_options = array_merge([
+			'Fontname'  => 'Arial',	
+			'Fontsize'  => '16', 	// As default fontsize in ffmpeg is 16
+			'BackColour'	=>	'&H80000000',
+			'BorderStyle'	=> 4
+		], $options);
+
+		// Loop through options array 
+		foreach($arr_options as $key => $value) {
+			
+			if (!is_null( $arr_options[$key] ) ) {
+				if ( $key !== 'Filename') $str_options .= $key . "=" . $value . ",";
+			};
+
+		}
+
+		$this->options['vf']['subtitles'] = $arr_options['Filename'] . ':force_style=' . escapeshellarg($str_options);
+		return $this;
+
 	}
 	/**
 	 *   ATENTION!: This method is experimental
@@ -246,77 +267,11 @@ class FFmpeg
 
 		}
 
-		$this->options['vf']['drawtext'] = chr(34) . $str_options . chr(34);
+		$this->options['vf']['drawtext'] = escapeshellarg($str_options);
 		return $this;
 
 	}
-    /**
-	 *   ATENTION!: This method is experimental
-	 *
-	 *   Updated: 05 Aug 2024
-	 *	 
-	 *   @return	object  $ytshort https://ffmpeg.org/ffmpeg-filters.html
-	 *   @param	array 	$array_options
-	 *   @access	public
-	 *   @example    	$FFmpeg->ytshort( $mode );
-	 * 
-	 *   Available Ratios:
-	 * 	 16:9, 1:1, 4:5, 9:16
-	 * 
-	 */
-	public function ytshort( $ratio = "landscape", $logo = true )
-	{
-		// Youtube short will natively play at 24, 25, and 30 
-		// note: most other social platform play at 30 FPS.
-		$this->frameRate(30);
-
-		$arr_stack = array(
-			0 => "[0:v]scale=2560:2560*(9/16),hue=s=0,boxblur=10[bg];",
-			1 => "[0:v]scale=720:405,crop=720:405[fg];",
-			2 => "[bg][fg]overlay=(W-w)/2:(H-h)/2[tmp];",
-			3 => "[tmp]crop=720:1280[final];"			
-		);
-		
-		// Generate YT_Short with ratio (16/9)
-		if ( $ratio == "landscape" ) {
-
-			$arr_stack[1] = "[0:v]scale=720:405,crop=720:405[fg];";
-
-		// Generate YT_Short with ratio (1/1)
-		} elseif ( $ratio == "square") {
-
-			$arr_stack[1] = "[0:v]scale=1280:720,crop=720:720[fg];";
-		
-		// Generate YT_Short with ratio (4/5)
-		} elseif ( $ratio == "vertical") {
-
-			$arr_stack[1] = "[0:v]scale=1280:720,crop=720*(5/4):720[fg];";
-		
-		// Generate YT_Short with ratio (9/16) or 'Full Vertical'
-		} else {
-
-			$arr_stack[1] = "[0:v]scale=2560:2560*(9/16),crop=720:1280[fg];";
-
-		}
-		
-		// check if the inputs file are more then '1'
-		$inputs = count( $this->options['i'] );
-		// YT_Short with Live logo
-		if ( $inputs > 1 && $logo == true ) {
-				
-			array_splice( $arr_stack, count($arr_stack), 0, "[1:v]scale=iw*(9/16):-1[wm];[final][wm]overlay=30:30");
-			
-		}
-
-		// Loop through options array 
-		foreach($arr_stack as $key => $value) {
-			$str_filters .= $value;
-		}
-	
-		$this->options['filter_complex'] = chr(34) . $str_filters . chr(34);
-		return $this;
-
-	}
+    
 	/**
 	 *   ATENTION!: This method is experimental
 	 *

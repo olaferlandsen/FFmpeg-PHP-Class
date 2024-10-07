@@ -7,7 +7,7 @@ include DIRNAME(DIRNAME(__FILE__)).'/src/FFmpeg.php';
 *	Create command
 */
 $FFmpeg = new FFmpeg( exec('which ffmpeg') );
-$FFmpeg->input( '/var/www/html/frontend/videos/nike_ad.mp4' );
+$FFmpeg->input( '/var/media/original.avi' );
 $FFmpeg->overwrite();
 /**
 *	Custom Text options
@@ -22,13 +22,7 @@ $arrOpts = array(
 *	Create command
 */
 $FFmpeg->drawtext( $arrOpts );
-$FFmpeg->output( '/var/www/html/frontend/videos/addtext.mp4' , 'mp4' );
-$FFmpeg->audioCodec();
+$FFmpeg->output( '/var/media/output.mp4' , 'mp4' );
+$FFmpeg->vcodec('h264')->audioCodec( 'copy' );
 $FFmpeg->ready();
-
-echo "<pre>";
-print_r($FFmpeg->out);
-print_r($FFmpeg->var);
-echo "<p>";
-echo $FFmpeg->command;
-echo "</pre>";
+print($FFmpeg->command);
