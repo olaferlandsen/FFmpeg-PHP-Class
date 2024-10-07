@@ -11,8 +11,6 @@
 */
 class FFmpeg
 {
-	public $out;
-	public $var;
 	/**
 	*	
 	*/
