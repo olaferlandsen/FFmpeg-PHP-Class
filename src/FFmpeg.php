@@ -52,18 +52,16 @@ class FFmpeg
 		'filename'			=>	'i',
 		'offset'			=>	'itsoffset',
 		'time'				=>	'timestamp',
-		'number'			=>	'vframes'
+		'number'			=>	'vframes',
 	);
 	/**
 	*	
 	*/
 	private $ffmpeg		=	'ffmpeg';
 	/**
-     * 	Updated: 05 Aug 2024
-	 *  Set to public for 'input' / 'i' counter
-     * 
+	*	
 	*/
-	public $options	=	array();
+	private $options	=	array();
 	/**
 	*	
 	*/
