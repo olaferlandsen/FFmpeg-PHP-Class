@@ -186,92 +186,49 @@ class FFmpeg
 	}
 	/**
 	 *   ATENTION!: This method is experimental
-	 *
-	 *   Updated: 05 Aug 2024
 	 *	 
-	 *   @param	array	$options 	subtitles options
+	 *   @param	string	$filename	SubRipText or "SRT" file path ( '*.srt' )
+	 *   @param	string	$font		Fontfile name
+	 *	 @param	integer	$fontsize	The default value of fontsize is 16
+	 *	 @param	string	$backcolour	The default value is "&H80000000" ( means having a 50% opaque black background )
+	 *	 @param	integer	$borderstyle	The default value of borderstyle is 4
 	 *   @return	object
 	 *   @access	public
 	 *   @version	1.2	Fix by @nath4n
 	 */
-	public function subtitles( array $options=[] )
+	public function subtitles( $filename="null", $font="Arial", $fontsize=16, $backcolour="&H80000000", $borderstyle=4 )
+	{
+
+		$filter_options = sprintf("%s:force_style=Fontname=%s,Fontsize=%d,BackColour=%s,BorderStyle=%d", $filename, $font, $fontsize, $backcolour, $borderstyle );
+
+		$this->options['vf']['subtitles'] = escapeshellarg($filter_options);
+		return $this;
+
+	}
+	/**
+	 *   ATENTION!: This method is experimental
+	 *	 
+	 *   @param	string	$font		Fontfile name
+	 *   @param	string	$text		Custom text
+	 *	 @param	string	$posx		text posiion vertically
+	 *	 @param	string	$posy		text posiion horizontally
+	 *	 @param	integer	$fontsize	The default value of fontsize is 16
+	 *	 @param	string	$fontcolor	The default value of fontcolor is "white"
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @nath4n
+	 */
+	public function drawtext( $font="Arial", $text=null, $posx='(w-text_w)/2', $posy='(h-text_h)/2', $fontsize=16, $fontcolor="white" )
 	{    
+
+		$filter_options = sprintf("font=%s:text=%s:x=%s:y=%s:fontsize=%d:fontcolor=%s", $font, $text, $posx, $posy, $fontsize, $fontcolor );
 		
-		$arr_options = array_merge([
-			'Fontname'  => 'Arial',	
-			'Fontsize'  => '16', 	// As default fontsize in ffmpeg is 16
-			'BackColour'	=>	'&H80000000',
-			'BorderStyle'	=> 4
-		], $options);
-
-		// Loop through options array 
-		foreach($arr_options as $key => $value) {
-			
-			if (!is_null( $arr_options[$key] ) ) {
-				if ( $key !== 'Filename') $str_options .= $key . "=" . $value . ",";
-			};
-
-		}
-
-		$this->options['vf']['subtitles'] = $arr_options['Filename'] . ':force_style=' . escapeshellarg($str_options);
+		$this->options['vf']['drawtext'] = escapeshellarg($filter_options);
 		return $this;
 
-	}
+	}    
 	/**
 	 *   ATENTION!: This method is experimental
-	 *
-	 *   Updated: 05 Aug 2024
-	 *	 
-	 *   @param	array	$options 	drawtext options
-	 *   @return	object
-	 *   @access	public
-	 *   @version	1.2	Fix by @nath4n
-	 */
-	public function drawtext( array $options=[] )
-	{    
-
-		$arr_options = array_merge([
-			'font' => 'Arial',
-			'text' => 'Hello World!',			
-			'x' => '(w-text_w)/2',
-			'y' => '(h-text_h)/2',
-			'alpha' => null,
-			'fontsize' => '24',
-			'fontcolor' => 'white',
-			'boxcolor' => 'black@0.5',
-			'bordercolor' => null,
-			'shadowcolor' => null,
-			'box' => '1',
-			'boxw' => null,
-			'boxh' => null,
-			'boxborderw' => '5',
-			'line_spacing' => null,
-			'text_align' => null,
-			'shadowx' => null,
-			'shadowy' => null,
-			'borderw' => null	
-		], $options);
-
-		// Loop through options array 
-		foreach($arr_options as $key => $value) {
-
-			if ($key == 'text') $value = escapeshellarg($value);
-			
-			if (!is_null( $arr_options[$key] ) ) {            
-				$str_options .= $key . "=" . $value . ":";
-			};
-
-		}
-
-		$this->options['vf']['drawtext'] = escapeshellarg($str_options);
-		return $this;
-
-	}
-    
-	/**
-	 *   ATENTION!: This method is experimental
-	 *
-	 *   Updated: 30 Sep 2024
 	 *	 
 	 *   @param	string	$file	input file path
 	 *   @return	object
@@ -304,7 +261,7 @@ class FFmpeg
 	*/
 	public function thumb ($size, $start, $videoFrames = 1)
 	{
-		//$input = false;
+			//$input = false;
 	        if (!is_numeric( $videoFrames ) OR $videoFrames <= 0) {
 	        	$videoFrames = 1;
 	        }

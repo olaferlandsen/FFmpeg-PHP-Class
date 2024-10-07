@@ -2,27 +2,16 @@
 /**
 *	include FFmpeg class
 **/
-include DIRNAME(DIRNAME(__FILE__)).'/uploadz/ffmpeg/FFmpeg.php';
+include DIRNAME(DIRNAME(__FILE__)).'/src/FFmpeg.php';
 /**
 *	Create command
 */
+$srt_file = "/var/media/subtitle.srt";
 $FFmpeg = new FFmpeg( exec('which ffmpeg') );
-$FFmpeg->input( '/var/media/original.avi' );
+$FFmpeg->input( '/var/media/input.mp4' );
 $FFmpeg->overwrite();
-/**
-*	Custom Text options
-**/
-$arrOpts = array(
-    'Filename'  => '/var/media/subtitle.srt',
-    'Fontname'  => 'Arial',    
-    'Fontsize'  => '16',
-    'Shadow'    => 0.75
-);
-/**
-*	Create command
-*/
-$FFmpeg->subtitles( $arrOpts );
-$FFmpeg->output( '/var/media/output.mp4' , 'mp4' );
+$FFmpeg->subtitles( $srt_file, "Arial", 16, "&H80000000", 4 );
+$FFmpeg->output( '/var/media/output.mp4' , 'mp4' )->overwrite();
 $FFmpeg->vcodec('h264')->audioCodec( 'copy' );
 $FFmpeg->ready();
 print($FFmpeg->command);
