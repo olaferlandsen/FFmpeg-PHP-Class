@@ -2,27 +2,26 @@
 /**
 *	include FFmpeg class
 **/
-include DIRNAME(DIRNAME(__FILE__)).'/uploadz/ffmpeg/FFmpeg.php';
+include DIRNAME(DIRNAME(__FILE__)).'/src/FFmpeg.php';
+
 /**
-*	Create command
-*/
-$FFmpeg = new FFmpeg( exec('which ffmpeg') );
-$FFmpeg->input( '/var/media/original.avi' );
-$FFmpeg->overwrite();
-/**
-*	Custom Text options
+*	get options from database
 **/
-$arrOpts = array(
-    'Filename'  => '/var/media/subtitle.srt',
-    'Fontname'  => 'Arial',    
-    'Fontsize'  => '16',
-    'Shadow'    => 0.75
+$options = array(
+	'duration'	=>	99,
+	'position'	=>	0,
+	'itsoffset'	=>	2,
 );
 /**
 *	Create command
 */
-$FFmpeg->subtitles( $arrOpts );
-$FFmpeg->output( '/var/media/output.mp4' , 'mp4' );
-$FFmpeg->vcodec('h264')->audioCodec( 'copy' );
-$FFmpeg->ready();
+$FFmpeg = new FFmpeg( '/usr/local/bin/ffmpeg' );
+$FFmpeg->input( '/var/media/original.avi' );
+$FFmpeg->transpose( 0 )->vflip()->grayScale()->vcodec('h264')->frameRate('30000/1001');
+$FFmpeg->acodec( 'aac' )->audioBitrate( '192k' );
+foreach( $options AS $option => $values )
+{
+	$FFmpeg->call( $option , $values );
+}
+$FFmpeg->output( '/var/media/new.mp4' , 'mp4' );
 print($FFmpeg->command);
