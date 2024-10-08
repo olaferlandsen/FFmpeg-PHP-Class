@@ -10,7 +10,7 @@
 *   @author         Olaf Erlandsen <olaftriskel@gmail.com>
 */
 class FFmpeg
-{
+{	
 	/**
 	*	
 	*/
@@ -152,7 +152,7 @@ class FFmpeg
 						if (is_numeric( $item ) AND is_integer($item)) {
 							$items[] = $val;
 						} else {
-							$items[] = chr(34) . $item."=". $val . chr(34);
+							$items[] = "\"" . $item."=". $val . "\"";
 						}
 					} else {
 						$items[] = $item;
@@ -165,7 +165,8 @@ class FFmpeg
 				$options [] = "-" . $option . " ". strval($values);
 			}
 		}
-		$this->command = $this->ffmpeg." ".join(' ',$options)." ".$output . $this->STD;
+		
+		$this->command = $this->ffmpeg." ".join(' ',$options) . " " . $output . $this->STD;
 		return $this;
 	}
 	/**
@@ -196,12 +197,29 @@ class FFmpeg
 	 *   @access	public
 	 *   @version	1.2	Fix by @nath4n
 	 */
-	public function subtitles( $filename="null", $font="Arial", $fontsize=16, $backcolour="&H80000000", $borderstyle=4 )
-	{
+	public function subtitles( $filename=null, array $options=[] )
+	{    
+		
+		$arr_options = array_merge([
+			'Fontname'  => 'Arial',	
+			'Fontsize'  => '16', 	// As default fontsize in ffmpeg is 16
+			'OutlineColour' => '&H40000000',
+			'BorderStyle'   => null,
+			'Spacing'   => 0.2,
+			'Outline'   => 0,
+			'Shadow'    => 0.75
+		], $options);
 
-		$filter_options = sprintf("%s:force_style=Fontname=%s,Fontsize=%d,BackColour=%s,BorderStyle=%d", $filename, $font, $fontsize, $backcolour, $borderstyle );
+		// Loop through options array 
+		foreach($arr_options as $key => $value) {
+			
+			if (!is_null( $arr_options[$key] ) ) {
+				if ( $key !== 'Filename') $str_options .= $key . "=" . $value . ",";
+			};
 
-		$this->options['vf']['subtitles'] = escapeshellarg($filter_options);
+		}
+
+		$this->options['vf']['subtitles'] = $filename . ':force_style=' . escapeshellarg($str_options);
 		return $this;
 
 	}
