@@ -128,6 +128,16 @@ class FFmpeg
 		return $this;
 	}
 	/**
+	*   @param	string	$string
+	*   @return	object
+	*   @access	private
+	*/
+	private function addquotes( $string = " " )
+	{
+		$result = sprintf( '"%s"', $string );
+		return $result;
+	}
+	/**
      * 	Updated: 05 Aug 2024
      * 
 	 *   @param	string	$output			Output file path
@@ -152,21 +162,21 @@ class FFmpeg
 						if (is_numeric( $item ) AND is_integer($item)) {
 							$items[] = $val;
 						} else {
-							$items[] = "\"" . $item."=". $val . "\"";
+							$items[] = $this->addquotes( $item."=". $val );
 						}
 					} else {
 						$items[] = $item;
 					}
 				}
 				
-				$options [] = "-".$option." ".join(',',$items);
+				$options [] = "-" . $option . " " . join(',',$items);
 
 			} else {
-				$options [] = "-" . $option . " ". strval($values);
+				$options [] = "-" . $option . " " . strval($values);
 			}
 		}
 		
-		$this->command = $this->ffmpeg." ".join(' ',$options) . " " . $output . $this->STD;
+		$this->command = $this->ffmpeg." ".join(' ',$options) . " " . $this->addquotes( $output ) . $this->STD;
 		return $this;
 	}
 	/**
