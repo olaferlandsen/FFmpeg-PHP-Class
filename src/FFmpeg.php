@@ -10,7 +10,7 @@
 *   @author         Olaf Erlandsen <olaftriskel@gmail.com>
 */
 class FFmpeg
-{
+{	
 	/**
 	*	
 	*/
@@ -128,11 +128,23 @@ class FFmpeg
 		return $this;
 	}
 	/**
-	*   @param	string	$output			Output file path
-	*   @param	string	$forceFormat	Force format output
+	*   @param	string	$string
 	*   @return	object
-	*   @access	public
+	*   @access	private
 	*/
+	private function addquotes( $string = " " )
+	{
+		$result = sprintf( '"%s"', $string );
+		return $result;
+	}
+	/**
+     * 	Updated: 05 Aug 2024
+     * 
+	 *   @param	string	$output			Output file path
+	 *   @param	string	$forceFormat	Force format output
+	 *   @return	object
+	 *   @access	public
+	 */
 	public function output( $output = null , $forceFormat = null )
 	{
 		$this->forceFormat( $forceFormat );
@@ -144,24 +156,27 @@ class FFmpeg
 					if (!is_null($val)) {
 						if (is_array($val)) {
 							print_r( $val );
-							$val = join( ',' , $val );
+							$val = join( ' ' , $val );
 						}
 						$val = strval( $val );
 						if (is_numeric( $item ) AND is_integer($item)) {
 							$items[] = $val;
 						} else {
-							$items[] = $item."=". $val;
+							$items[] = $this->addquotes( $item."=". $val );
 						}
 					} else {
 						$items[] = $item;
 					}
 				}
-				$options [] = "-".$option." ".join(',',$items);
+				
+				$options [] = "-" . $option . " " . join(',',$items);
+
 			} else {
-				$options [] = "-".$option." ".strval($values);
+				$options [] = "-" . $option . " " . strval($values);
 			}
 		}
-		$this->command = $this->ffmpeg." ".join(' ',$options)." ".$output . $this->STD;
+		
+		$this->command = $this->ffmpeg." ".join(' ',$options) . " " . $this->addquotes( $output ) . $this->STD;
 		return $this;
 	}
 	/**
@@ -181,15 +196,89 @@ class FFmpeg
 		return $this;
 	}
 	/**
-	*   @param	string	$file	input file path
-	*   @return	object
-	*   @access	public
-	*   @version	1.2	Fix by @propertunist
+	 *   ATENTION!: This method is experimental
+	 *	 
+	 *   @param		string	$filename	SubRipText or "SRT" file path ( '*.srt' )
+	 *   @param		array 	$options
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @nath4n
+	 */
+	public function subtitles( $filename=null, array $options=[] )
+	{    
+		
+		$arr_options = array_merge([
+			'Fontname'  => 'Arial',	
+			'Fontsize'  => '16', 	// As default fontsize in ffmpeg is 16
+			'OutlineColour' => '&H40000000',	// The default value is "&H80000000" ( 12 Bits color format )
+			'BorderStyle'   => null,	// The default value of borderstyle is 4
+			'Spacing'   => 0.2,
+			'Outline'   => 0,
+			'Shadow'    => 0.75
+		], $options);
+
+		// Loop through options array 
+		foreach($arr_options as $key => $value) {
+			
+			if (!is_null( $arr_options[$key] ) ) {
+				if ( $key !== 'Filename') $str_options .= $key . "=" . $value . ",";
+			};
+
+		}
+
+		$this->options['vf']['subtitles'] = $filename . ':force_style=' . escapeshellarg($str_options);
+		return $this;
+
+	}
+	/**
+	 *   ATENTION!: This method is experimental
+	 *	 
+	 *   @param		string	$font		Fontfile name
+	 *   @param		array 	$array_options
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @nath4n
+	 */
+	public function drawtext( $str_text="Video Title", array $options=[] )
+	{    
+
+		$arr_options = array_merge([
+			'text' => $str_text,
+			'font' => 'Arial',						
+			'x' => '(w-text_w)/2',
+			'y' => '(h-text_h)/2',
+			'fontsize' => '24',
+			'fontcolor' => 'white'
+		], $options);
+
+		// Loop through options array 
+		foreach($arr_options as $key => $value) {
+
+			if ($key == 'text') $value = escapeshellarg($value);
+			
+			if (!is_null( $arr_options[$key] ) ) {            
+				$str_options .= $key . "=" . $value . ":";
+			};
+
+		}
+	
+		$this->options['vf']['drawtext'] = $str_options;
+		return $this;
+
+	}    
+	/**
+	 *   ATENTION!: This method is experimental
+	 *	 
+	 *   @param		string	$file	input file path
+	 *   @return	object
+	 *   @access	public
+	 *   @version	1.2	Fix by @propertunist
 	*/
 	public function input ($file)
 	{
 		if (file_exists($file) AND is_file($file)) {
-			$this->set('i', '"'.$file.'"', false);
+			// set $append parameter into true for muliple inputs
+			$this->set('i', '"'.$file.'"', true);
 		} else {
 			if (strstr($file, '%') !== false) {
 				$this->set('i', '"'.$file.'"', false);
@@ -211,7 +300,7 @@ class FFmpeg
 	*/
 	public function thumb ($size, $start, $videoFrames = 1)
 	{
-		//$input = false;
+			//$input = false;
 	        if (!is_numeric( $videoFrames ) OR $videoFrames <= 0) {
 	        	$videoFrames = 1;
 	        }
@@ -484,7 +573,8 @@ class FFmpeg
 			trigger_error("Cannot execute a blank command",E_USER_ERROR);
 			return false;
 		}else{
-			return exec( $this->command . $append );
+			return exec( $this->command . $append, $this->out, $this->var);
+			
 		}
 	}
 	/**
