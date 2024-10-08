@@ -188,11 +188,8 @@ class FFmpeg
 	/**
 	 *   ATENTION!: This method is experimental
 	 *	 
-	 *   @param	string	$filename	SubRipText or "SRT" file path ( '*.srt' )
-	 *   @param	string	$font		Fontfile name
-	 *	 @param	integer	$fontsize	The default value of fontsize is 16
-	 *	 @param	string	$backcolour	The default value is "&H80000000" ( means having a 50% opaque black background )
-	 *	 @param	integer	$borderstyle	The default value of borderstyle is 4
+	 *   @param		string	$filename	SubRipText or "SRT" file path ( '*.srt' )
+	 *   @param		array 	$options
 	 *   @return	object
 	 *   @access	public
 	 *   @version	1.2	Fix by @nath4n
@@ -203,8 +200,8 @@ class FFmpeg
 		$arr_options = array_merge([
 			'Fontname'  => 'Arial',	
 			'Fontsize'  => '16', 	// As default fontsize in ffmpeg is 16
-			'OutlineColour' => '&H40000000',
-			'BorderStyle'   => null,
+			'OutlineColour' => '&H40000000',	// The default value is "&H80000000" ( 12 Bits color format )
+			'BorderStyle'   => null,	// The default value of borderstyle is 4
 			'Spacing'   => 0.2,
 			'Outline'   => 0,
 			'Shadow'    => 0.75
@@ -226,29 +223,43 @@ class FFmpeg
 	/**
 	 *   ATENTION!: This method is experimental
 	 *	 
-	 *   @param	string	$font		Fontfile name
-	 *   @param	string	$text		Custom text
-	 *	 @param	string	$posx		text posiion vertically
-	 *	 @param	string	$posy		text posiion horizontally
-	 *	 @param	integer	$fontsize	The default value of fontsize is 16
-	 *	 @param	string	$fontcolor	The default value of fontcolor is "white"
+	 *   @param		string	$font		Fontfile name
+	 *   @param		array 	$array_options
 	 *   @return	object
 	 *   @access	public
 	 *   @version	1.2	Fix by @nath4n
 	 */
-	public function drawtext( $font="Arial", $text=null, $posx='(w-text_w)/2', $posy='(h-text_h)/2', $fontsize=16, $fontcolor="white" )
+	public function drawtext( $str_text="Video Title", array $options=[] )
 	{    
 
-		$filter_options = sprintf("font=%s:text=%s:x=%s:y=%s:fontsize=%d:fontcolor=%s", $font, $text, $posx, $posy, $fontsize, $fontcolor );
-		
-		$this->options['vf']['drawtext'] = escapeshellarg($filter_options);
+		$arr_options = array_merge([
+			'text' => $str_text,
+			'font' => 'Arial',						
+			'x' => '(w-text_w)/2',
+			'y' => '(h-text_h)/2',
+			'fontsize' => '24',
+			'fontcolor' => 'white'
+		], $options);
+
+		// Loop through options array 
+		foreach($arr_options as $key => $value) {
+
+			if ($key == 'text') $value = escapeshellarg($value);
+			
+			if (!is_null( $arr_options[$key] ) ) {            
+				$str_options .= $key . "=" . $value . ":";
+			};
+
+		}
+	
+		$this->options['vf']['drawtext'] = $str_options;
 		return $this;
 
 	}    
 	/**
 	 *   ATENTION!: This method is experimental
 	 *	 
-	 *   @param	string	$file	input file path
+	 *   @param		string	$file	input file path
 	 *   @return	object
 	 *   @access	public
 	 *   @version	1.2	Fix by @propertunist

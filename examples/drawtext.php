@@ -26,7 +26,20 @@ $FFmpeg->overwrite();
 $pos_x = '(w-text_w)/2';
 $pos_y = '(h-text_h)/2';
 
-$FFmpeg->drawtext( "Arial", $text="Hello World!", 16, $pos_x, $pos_y, "white" );
+$settings = array(
+    'font' => 'Arial',						
+    'x' => $pos_x,
+    'y' => $pos_y,
+    'fontsize' => 24,
+    'fontcolor' => 'white'
+);
+/**
+ * This function by default can be run without the array settings ( text only )
+ * 
+ * Example:
+ * $FFmpeg->drawtext( "Hello World!" );
+ */
+$FFmpeg->drawtext( "Hello World!", $settings );
 $FFmpeg->output( '/var/media/output.mp4' , 'mp4' );
 $FFmpeg->vcodec('h264')->audioCodec( 'copy' );
 $FFmpeg->ready();
